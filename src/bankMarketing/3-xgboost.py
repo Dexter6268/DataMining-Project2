@@ -18,7 +18,7 @@ def create_dir_if_not_exists(directory):
 # 主函数
 def main(args):
     # 创建结果目录
-    log_dir = "results/bankMarketing"
+    log_dir = "results/bankMarketing/xgboost"
     create_dir_if_not_exists(log_dir)
     log_file = os.path.join(log_dir, f"log_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt")
 
