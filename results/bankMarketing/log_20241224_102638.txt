@@ -1,0 +1,70 @@
+{
+    "args": {
+        "data_path": "data/bank+marketing/bank/bank-full.csv",
+        "n_splits": 5,
+        "random_state": 42,
+        "num_leaves": 64,
+        "max_depth": 20,
+        "learning_rate": 0.05,
+        "n_estimators": 800
+    },
+    "results": {
+        "Accuracy": "0.9062 \u00b1 0.0031",
+        "Precision": "0.6290 \u00b1 0.0189",
+        "Recall": "0.4838 \u00b1 0.0129",
+        "F1-Score": "0.5469 \u00b1 0.0139",
+        "ROC-AUC": "0.9309 \u00b1 0.0041",
+        "Confusion Matrices": [
+            [
+                [
+                    7684,
+                    301
+                ],
+                [
+                    526,
+                    532
+                ]
+            ],
+            [
+                [
+                    7685,
+                    300
+                ],
+                [
+                    563,
+                    494
+                ]
+            ],
+            [
+                [
+                    7658,
+                    326
+                ],
+                [
+                    546,
+                    512
+                ]
+            ],
+            [
+                [
+                    7717,
+                    267
+                ],
+                [
+                    537,
+                    521
+                ]
+            ],
+            [
+                [
+                    7667,
+                    317
+                ],
+                [
+                    558,
+                    500
+                ]
+            ]
+        ]
+    }
+}
