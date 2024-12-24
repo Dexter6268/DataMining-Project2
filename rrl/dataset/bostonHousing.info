@@ -1,0 +1,15 @@
+feature_1, continuous
+feature_2, continuous
+feature_3, continuous
+feature_4, continuous
+feature_5, continuous
+feature_6, continuous
+feature_7, continuous
+feature_8, continuous
+feature_9, continuous
+feature_10, continuous
+feature_11, continuous
+feature_12, continuous
+feature_13, continuous
+class, continuous
+LABEL_POS, -1

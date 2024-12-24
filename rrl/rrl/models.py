@@ -93,7 +93,7 @@ class MyDistributedDataParallel(torch.nn.parallel.DistributedDataParallel):
 class RRL:
     def __init__(self, dim_list, device_id, use_not=False, is_rank0=False, log_file=None, writer=None, left=None,
                  right=None, save_best=False, estimated_grad=False, save_path=None, distributed=True, use_skip=False, 
-                 use_nlaf=False, alpha=0.999, beta=8, gamma=1, temperature=0.01):
+                 use_nlaf=False, alpha=0.999, beta=8, gamma=1, temperature=0.01, type='discrete'):
         super(RRL, self).__init__()
         self.dim_list = dim_list
         self.use_not = use_not
@@ -104,6 +104,7 @@ class RRL:
         self.gamma = gamma
         self.best_f1 = -1.
         self.best_loss = 1e20
+        self.type = type
 
         self.device_id = device_id
         self.is_rank0 = is_rank0
@@ -170,18 +171,19 @@ class RRL:
         if data_loader is None:
             raise Exception("Data loader is unavailable!")
 
-        accuracy_b = []
-        f1_score_b = []
+        if self.type == 'discrete':
+            criterion = nn.CrossEntropyLoss().cuda(self.device_id)
+        else:
+            criterion = nn.MSELoss().cuda(self.device_id)
 
-        criterion = nn.CrossEntropyLoss().cuda(self.device_id)
-        optimizer = torch.optim.Adam(self.net.parameters(), lr=lr, weight_decay=0.0)
-
+        optimizer = torch.optim.Adam(self.net.parameters(), lr=lr, weight_decay=weight_decay)
         cnt = -1
         avg_batch_loss_rrl = 0.0
         epoch_histc = defaultdict(list)
+
         for epo in range(epoch):
             optimizer = self.exp_lr_scheduler(optimizer, epo, init_lr=lr, lr_decay_rate=lr_decay_rate,
-                                              lr_decay_epoch=lr_decay_epoch)
+                                            lr_decay_epoch=lr_decay_epoch)
 
             epoch_loss_rrl = 0.0
             abs_gradient_max = 0.0
@@ -192,101 +194,91 @@ class RRL:
                 ba_cnt += 1
                 X = X.cuda(self.device_id, non_blocking=True)
                 y = y.cuda(self.device_id, non_blocking=True)
-                optimizer.zero_grad()  # Zero the gradient buffers.
-                
-                # trainable softmax temperature
+                optimizer.zero_grad()
+
                 y_bar = self.net.forward(X) / torch.exp(self.net.t)
-                y_arg = torch.argmax(y, dim=1)
-                
-                loss_rrl = criterion(y_bar, y_arg) + weight_decay * self.l2_penalty()
-                
+                if self.type == 'discrete':
+                    y_bar = torch.softmax(y_bar, dim=1)
+                    y_arg = torch.argmax(y, dim=1)
+                    loss_rrl = criterion(y_bar, y_arg) + weight_decay * self.l2_penalty()
+                else:
+                    loss_rrl = criterion(y_bar, y) + weight_decay * self.l2_penalty()
+
                 ba_loss_rrl = loss_rrl.item()
                 epoch_loss_rrl += ba_loss_rrl
                 avg_batch_loss_rrl += ba_loss_rrl
-                
+
                 loss_rrl.backward()
 
                 cnt += 1
                 with torch.no_grad():
                     if self.is_rank0 and cnt % log_iter == 0 and cnt != 0 and self.writer is not None:
-                        self.writer.add_scalar('Avg_Batch_Loss_GradGrafting', avg_batch_loss_rrl / log_iter, cnt)
-                        edge_p = self.edge_penalty().item()
-                        self.writer.add_scalar('Edge_penalty/Log', np.log(edge_p), cnt)
-                        self.writer.add_scalar('Edge_penalty/Origin', edge_p, cnt)
+                        self.writer.add_scalar('Avg_Batch_Loss', avg_batch_loss_rrl / log_iter, cnt)
                         avg_batch_loss_rrl = 0.0
 
                 optimizer.step()
-                
+
                 if self.is_rank0:
                     for i, param in enumerate(self.net.parameters()):
                         abs_gradient_max = max(abs_gradient_max, abs(torch.max(param.grad)))
                         abs_gradient_avg += torch.sum(torch.abs(param.grad)) / (param.grad.numel())
                 self.clip()
 
-                if self.is_rank0 and (cnt % (TEST_CNT_MOD * (1 if self.save_best else 10)) == 0):
-                    if valid_loader is not None:
-                        acc_b, f1_b = self.test(test_loader=valid_loader, set_name='Validation')
-                    else: # use the data_loader as the valid loader
-                        acc_b, f1_b = self.test(test_loader=data_loader, set_name='Training')
-                    
-                    if self.save_best and (f1_b > self.best_f1 or (np.abs(f1_b - self.best_f1) < 1e-10 and self.best_loss > epoch_loss_rrl)):
-                        self.best_f1 = f1_b
-                        self.best_loss = epoch_loss_rrl
-                        self.save_model()
-                    
-                    accuracy_b.append(acc_b)
-                    f1_score_b.append(f1_b)
+            if valid_loader is not None:
+                if self.type == 'discrete':
+                    acc_b, f1_b = self.test(test_loader=valid_loader, set_name='Validation')
                     if self.writer is not None:
-                        self.writer.add_scalar('Accuracy_RRL', acc_b, cnt // TEST_CNT_MOD)
-                        self.writer.add_scalar('F1_Score_RRL', f1_b, cnt // TEST_CNT_MOD)
+                        self.writer.add_scalar('Accuracy', acc_b, epo)
+                        self.writer.add_scalar('F1_Score', f1_b, epo)
+                else:
+                    mse, rmse = self.test(test_loader=valid_loader, set_name='Validation')
+                    if self.writer is not None:
+                        self.writer.add_scalar('MSE', mse, epo)
+                        self.writer.add_scalar('RMSE', rmse, epo)
+
             if self.is_rank0:
                 logging.info('epoch: {}, loss_rrl: {}'.format(epo, epoch_loss_rrl))
                 if self.writer is not None:
-                    self.writer.add_scalar('Training_Loss_RRL', epoch_loss_rrl, epo)
+                    self.writer.add_scalar('Training_Loss', epoch_loss_rrl, epo)
                     self.writer.add_scalar('Abs_Gradient_Max', abs_gradient_max, epo)
                     self.writer.add_scalar('Abs_Gradient_Avg', abs_gradient_avg / ba_cnt, epo)
-        if self.is_rank0 and not self.save_best:
-            self.save_model()
+
         return epoch_histc
 
     @torch.no_grad()
     def test(self, test_loader=None, set_name='Validation'):
         if test_loader is None:
             raise Exception("Data loader is unavailable!")
-        
-        y_list = []
-        for X, y in test_loader:
-            y_list.append(y)
-        y_true = torch.cat(y_list, dim=0)
-        y_true = y_true.cpu().numpy().astype(int)
-        y_true = np.argmax(y_true, axis=1)
-        data_num = y_true.shape[0]
 
-        slice_step = data_num // 40 if data_num >= 40 else 1
-        logging.debug('y_true: {} {}'.format(y_true.shape, y_true[:: slice_step]))
+        y_list = []
+        for _, y in test_loader:
+            y_list.append(y)
+        y_true = torch.cat(y_list, dim=0).cpu().numpy()
+
+        if self.type == 'discrete':
+            y_true = np.argmax(y_true, axis=1)
 
         y_pred_b_list = []
-        for X, y in test_loader:
+        for X, _ in test_loader:
             X = X.cuda(self.device_id, non_blocking=True)
             output = self.net.forward(X)
-            y_pred_b_list.append(output)
+            if self.type == 'discrete':
+                output = torch.softmax(output / torch.exp(self.net.t), dim=1)
+            y_pred_b_list.append(output.cpu())
 
-        y_pred_b = torch.cat(y_pred_b_list).cpu().numpy()
-        y_pred_b_arg = np.argmax(y_pred_b, axis=1)
-        logging.debug('y_rrl_: {} {}'.format(y_pred_b_arg.shape, y_pred_b_arg[:: slice_step]))
-        logging.debug('y_rrl: {} {}'.format(y_pred_b.shape, y_pred_b[:: (slice_step)]))
+        y_pred_b = torch.cat(y_pred_b_list).numpy()
 
-        accuracy_b = metrics.accuracy_score(y_true, y_pred_b_arg)
-        f1_score_b = metrics.f1_score(y_true, y_pred_b_arg, average='macro')
-
-        logging.info('-' * 60)
-        logging.info('On {} Set:\n\tAccuracy of RRL  Model: {}'
-                        '\n\tF1 Score of RRL  Model: {}'.format(set_name, accuracy_b, f1_score_b))
-        logging.info('On {} Set:\nPerformance of  RRL Model: \n{}\n{}'.format(
-            set_name, metrics.confusion_matrix(y_true, y_pred_b_arg), metrics.classification_report(y_true, y_pred_b_arg)))
-        logging.info('-' * 60)
-
-        return accuracy_b, f1_score_b
+        if self.type == 'discrete':
+            y_pred_b_arg = np.argmax(y_pred_b, axis=1)
+            accuracy_b = metrics.accuracy_score(y_true, y_pred_b_arg)
+            f1_score_b = metrics.f1_score(y_true, y_pred_b_arg, average='macro')
+            logging.info(f'On {set_name} Set:\n\tAccuracy: {accuracy_b}\n\tF1 Score: {f1_score_b}')
+            return accuracy_b, f1_score_b
+        else:
+            mse = metrics.mean_squared_error(y_true, y_pred_b)
+            rmse = np.sqrt(mse)
+            logging.info(f'On {set_name} Set:\n\tMSE: {mse}\n\tRMSE: {rmse}')
+            return mse, rmse
 
     def save_model(self):
         rrl_args = {'dim_list': self.dim_list, 'use_not': self.use_not, 'use_skip': self.use_skip, 'estimated_grad': self.estimated_grad, 

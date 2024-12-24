@@ -47,6 +47,7 @@ python experiment-breastCancer.py -d breastCancer (hyperparameters)
 ## RRL方法
 
 - 修改了GitHub中RRL代码仓库的数个错误
+- 对于BostonHousing数据集，修改rrl代码(修改内容见commit)，使用默认的5-fold cross validation
 - 对于breastCancer数据集，不使用k-fold cross validation，直接按指定的数据集划分
 - 对于bankMarketing数据集，使用默认的5-fold cross validation
 - 按照GitHub仓库README的Tuning Suggestions进行调参
