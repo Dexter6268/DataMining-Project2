@@ -1,0 +1,56 @@
+{
+    "args": {
+        "train_path": "data/breastCancer/breastCancer_Train.dbc",
+        "test_path": "data/breastCancer/breastCancer_Test.dbc",
+        "log_dir": "results/breastCancer",
+        "pca_components": 0.99,
+        "random_state": 42,
+        "max_depth": null,
+        "min_samples_split": 2,
+        "n_estimators": 100
+    },
+    "results": {
+        "Accuracy": 0.5789473684210527,
+        "Precision": 0.75,
+        "Recall": 0.5,
+        "F1-Score": 0.6,
+        "ROC-AUC": 0.6904761904761905,
+        "Confusion Matrix": [
+            [
+                5,
+                2
+            ],
+            [
+                6,
+                6
+            ]
+        ],
+        "Classification Report": {
+            "0": {
+                "precision": 0.45454545454545453,
+                "recall": 0.7142857142857143,
+                "f1-score": 0.5555555555555556,
+                "support": 7
+            },
+            "1": {
+                "precision": 0.75,
+                "recall": 0.5,
+                "f1-score": 0.6,
+                "support": 12
+            },
+            "accuracy": 0.5789473684210527,
+            "macro avg": {
+                "precision": 0.6022727272727273,
+                "recall": 0.6071428571428572,
+                "f1-score": 0.5777777777777777,
+                "support": 19
+            },
+            "weighted avg": {
+                "precision": 0.6411483253588517,
+                "recall": 0.5789473684210527,
+                "f1-score": 0.583625730994152,
+                "support": 19
+            }
+        }
+    }
+}

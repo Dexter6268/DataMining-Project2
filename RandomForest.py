@@ -152,8 +152,8 @@ class RandomForest:
         for estimator, feature_idx, _ in self.estimators:
             y_pred.append(estimator.predict(X[:, feature_idx]))
         y_pred = np.array(y_pred).T
-        y_pred_proba = np.mean(y_pred, axis=1)
-        return y_pred_proba
+        y_prob = np.stack([1 - np.mean(y_pred, axis=1), np.mean(y_pred, axis=1)], axis=1)
+        return y_prob
     
     def _cal_oob_score(self, X, y):
         num_samples, num_features = X.shape
