@@ -101,15 +101,16 @@ class RandomForest:
         self.estimators = None
 
     def fit(self, X, y):
-        np.random.seed(self.random_state)
+        # np.random.seed(self.random_state)
         if not isinstance(y, np.ndarray):
             y = np.array(y)
         
-        # 并行训练每棵树
-        self.estimators = Parallel(n_jobs=self.n_jobs)(
-            delayed(self._train_tree)(X, y, i)
-            for i in range(self.n_estimators)
-        )
+        # # 并行训练每棵树
+        # self.estimators = Parallel(n_jobs=self.n_jobs)(
+        #     delayed(self._train_tree)(X, y, i)
+        #     for i in range(self.n_estimators)
+        # )
+        self.estimators = [self._train_tree(X, y, i) for i in range(self.n_estimators)]
         
         # 计算袋外得分
         if self.oob_score:
@@ -145,6 +146,14 @@ class RandomForest:
         elif self.mode == 'regression':
             y_pred = np.mean(y_pred, axis=1)
         return y_pred
+    
+    def predict_proba(self, X):
+        y_pred = []
+        for estimator, feature_idx, _ in self.estimators:
+            y_pred.append(estimator.predict(X[:, feature_idx]))
+        y_pred = np.array(y_pred).T
+        y_prob = np.stack([1 - np.mean(y_pred, axis=1), np.mean(y_pred, axis=1)], axis=1)
+        return y_prob
     
     def _cal_oob_score(self, X, y):
         num_samples, num_features = X.shape
@@ -232,4 +241,4 @@ def compare_against_sklearn(random_state=42):
     print("sklearn RandomForest 回归 MSE:", mse_sklearn)
     print('sklearn oob score:', rf_sklearn.oob_score_)
 
-compare_against_sklearn(random_state=0)
+# compare_against_sklearn(random_state=0)
