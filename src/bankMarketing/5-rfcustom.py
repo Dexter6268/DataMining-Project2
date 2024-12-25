@@ -20,7 +20,7 @@ def create_dir_if_not_exists(directory):
 # 主函数
 def main(args):
     # 创建结果目录
-    log_dir = "results/bankMarketing/"
+    log_dir = "results/bankMarketing/rfcustom"
     create_dir_if_not_exists(log_dir)
     log_file = os.path.join(log_dir, f"log_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt")
 
@@ -35,9 +35,9 @@ def main(args):
         data[col] = le.fit_transform(data[col])
         label_encoders[col] = le
 
-    numeric_columns = ['age', 'balance', 'day', 'duration', 'campaign', 'pdays', 'previous']
-    scaler = StandardScaler()
-    data[numeric_columns] = scaler.fit_transform(data[numeric_columns])
+    # numeric_columns = ['age', 'balance', 'day', 'duration', 'campaign', 'pdays', 'previous']
+    # scaler = StandardScaler()
+    # data[numeric_columns] = scaler.fit_transform(data[numeric_columns])
 
     X = data.drop('y', axis=1).values
     y = data['y'].values
@@ -113,8 +113,8 @@ if __name__ == "__main__":
     parser.add_argument("--n_splits", type=int, default=5, help="Number of splits for Stratified K-Fold.")
     parser.add_argument("--random_state", type=int, default=42, help="Random state for reproducibility.")
     parser.add_argument("--max_depth", type=int, default=None, help="Maximum tree depth in customized RandomForest.")
-    parser.add_argument("--min_samples_split", type=int, default=2, help="Minimum samples required to split an internal node in customized RandomForest.")
-    parser.add_argument("--n_estimators", type=int, default=100, help="Number of trees in customized RandomForest.")
+    parser.add_argument("--min_samples_split", type=int, default=20, help="Minimum samples required to split an internal node in customized RandomForest.")
+    parser.add_argument("--n_estimators", type=int, default=50, help="Number of trees in customized RandomForest.")
     
     args = parser.parse_args()
     main(args)
