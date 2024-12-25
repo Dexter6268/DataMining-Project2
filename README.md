@@ -43,6 +43,7 @@ python experiment-breastCancer.py -d breastCancer (hyperparameters)
 
 - 大部分数据集主要评估指标为Macro F1-score
 - breastCancer数据集关注指标Recall指标（假负例代价高）
+- 除了RRL方法外，其它方法的结果文件在`results/(数据集)/(方法)文件夹`下
 
 ## RRL方法
 
@@ -58,4 +59,3 @@ python experiment-breastCancer.py -d breastCancer (hyperparameters)
 
 ## LightGBM方法
 - 对lgb.LGBMClassifier进行调参
-- 不同数据集、不同超参数的实验结果在`results/(数据集名称)`文件夹下
