@@ -2,7 +2,7 @@
     "args": {
         "train_path": "data/breastCancer/breastCancer_Train.dbc",
         "test_path": "data/breastCancer/breastCancer_Test.dbc",
-        "log_dir": "results/breastCancer",
+        "log_dir": "results/breastCancer/xgboost",
         "pca_components": 0.99,
         "random_state": 42,
         "max_depth": 6,

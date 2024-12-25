@@ -20,7 +20,7 @@ def create_dir_if_not_exists(directory):
 # 主函数
 def main(args):
     # 创建结果目录
-    log_dir = "results/bankMarketing"
+    log_dir = "results/bankMarketing/"
     create_dir_if_not_exists(log_dir)
     log_file = os.path.join(log_dir, f"log_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt")
 
@@ -39,8 +39,8 @@ def main(args):
     scaler = StandardScaler()
     data[numeric_columns] = scaler.fit_transform(data[numeric_columns])
 
-    X = data.drop('y', axis=1)
-    y = data['y']
+    X = data.drop('y', axis=1).values
+    y = data['y'].values
 
     skf = StratifiedKFold(n_splits=args.n_splits, shuffle=True, random_state=args.random_state)
 
@@ -54,8 +54,8 @@ def main(args):
 
     # 交叉验证过程
     for train_index, test_index in skf.split(X, y):
-        X_train, X_test = X.iloc[train_index], X.iloc[test_index]
-        y_train, y_test = y.iloc[train_index], y.iloc[test_index]
+        X_train, X_test = X[train_index], X[test_index]
+        y_train, y_test = y[train_index], y[test_index]
 
         smote = SMOTE(sampling_strategy='auto', random_state=args.random_state)
         X_train, y_train = smote.fit_resample(X_train, y_train)
@@ -108,13 +108,13 @@ def main(args):
         print(f"Fold {i}:\n{cm}")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Train RandomForest on Bank Marketing Dataset.")
+    parser = argparse.ArgumentParser(description="Train cumstomized RandomForest on Bank Marketing Dataset.")
     parser.add_argument("--data_path", type=str, default="data/bank+marketing/bank/bank-full.csv", help="Path to the dataset.")
     parser.add_argument("--n_splits", type=int, default=5, help="Number of splits for Stratified K-Fold.")
     parser.add_argument("--random_state", type=int, default=42, help="Random state for reproducibility.")
-    parser.add_argument("--max_depth", type=int, default=None, help="Maximum tree depth in RandomForest.")
-    parser.add_argument("--min_samples_split", type=int, default=2, help="Minimum samples required to split an internal node in RandomForest.")
-    parser.add_argument("--n_estimators", type=int, default=100, help="Number of trees in RandomForest.")
+    parser.add_argument("--max_depth", type=int, default=None, help="Maximum tree depth in customized RandomForest.")
+    parser.add_argument("--min_samples_split", type=int, default=2, help="Minimum samples required to split an internal node in customized RandomForest.")
+    parser.add_argument("--n_estimators", type=int, default=100, help="Number of trees in customized RandomForest.")
     
     args = parser.parse_args()
     main(args)

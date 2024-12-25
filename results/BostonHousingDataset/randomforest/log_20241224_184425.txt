@@ -1,11 +1,11 @@
 {
     "args": {
         "data_path": "data/HousingData.csv",
-        "log_dir": "results/BostonHousingDataset",
+        "log_dir": "results/BostonHousingDataset/randomforest",
         "n_splits": 5,
         "random_state": 42,
         "n_estimators": 200,
-        "min_sample_split": 2,
+        "min_samples_split": 2,
         "max_depth": 6
     },
     "results": {
