@@ -8,6 +8,7 @@ import argparse
 import os
 from datetime import datetime
 import json
+from imblearn.over_sampling import SMOTE
 
 # 创建目录函数
 def create_dir_if_not_exists(directory):
@@ -53,6 +54,9 @@ def main(args):
     for train_index, test_index in skf.split(X, y):
         X_train, X_test = X.iloc[train_index], X.iloc[test_index]
         y_train, y_test = y.iloc[train_index], y.iloc[test_index]
+
+        smote = SMOTE(sampling_strategy='auto', random_state=args.random_state)
+        X_train, y_train = smote.fit_resample(X_train, y_train)
 
         # LightGBM 模型
         model = lgb.LGBMClassifier(
