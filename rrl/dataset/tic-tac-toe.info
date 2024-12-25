@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 1 discrete
 2 discrete
 3 discrete
@@ -9,3 +10,16 @@
 9 discrete
 class discrete
 LABEL_POS -1
+=======
+1 discrete
+2 discrete
+3 discrete
+4 discrete
+5 discrete
+6 discrete
+7 discrete
+8 discrete
+9 discrete
+class discrete
+LABEL_POS -1
+>>>>>>> fbc36cd514e22b9aeb8c1f8fc7b2b8859e692c61
