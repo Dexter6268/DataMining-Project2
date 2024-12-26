@@ -66,6 +66,9 @@ class CART:
                     if score < best_score:
                         best_score = score
                         best_split = (feature_idx, (sorted_X[i] + sorted_X[i - 1]) / 2)
+                    # 如果score非常小，可以提前停止计算下一个分裂点
+                    if score < 1e-3:  # 增益过小
+                        break
             else:
                 left_counts = np.zeros(max(sorted_y) + 1)
                 right_counts = np.bincount(sorted_y, minlength=max(sorted_y) + 1)
@@ -88,6 +91,9 @@ class CART:
                     if score < best_score:
                         best_score = score
                         best_split = (feature_idx, (sorted_X[i] + sorted_X[i - 1]) / 2)
+                    # 如果score非常小，可以提前停止计算下一个分裂点
+                    if score < 1e-3:  # 增益过小
+                        break
 
         if best_split is None:
             if self.mode == 'regression':
@@ -124,6 +130,8 @@ class RandomForest:
         self.max_features = max_features
         self.oob_score = oob_score
         self.oob_score_ = None  # 用于存储OOB得分
+        if mode not in ['classification', 'regression']:
+            raise ValueError("mode must be 'classification' or 'regression'") 
         self.mode = mode
         self.random_state = random_state
         self.n_jobs = n_jobs
@@ -132,9 +140,8 @@ class RandomForest:
         self.estimators = None
 
     def fit(self, X, y):
-        # np.random.seed(self.random_state)
-        if not isinstance(y, np.ndarray):
-            y = np.array(y)
+        X = np.array(X, dtype=np.float32)
+        y = np.array(y, dtype=np.int32)
         
         # # 并行训练每棵树
         # self.estimators = Parallel(n_jobs=self.n_jobs)(
@@ -167,6 +174,7 @@ class RandomForest:
         return (estimator, feature_idx, sample_idx)
     
     def predict(self, X):
+        X = np.array(X, dtype=np.float32)
         y_pred = []
         for estimator, feature_idx, _ in self.estimators:
             y_pred.append(estimator.predict(X[:, feature_idx]))
@@ -179,6 +187,7 @@ class RandomForest:
         return y_pred
     
     def predict_proba(self, X):
+        X = np.array(X, dtype=np.float32)
         y_pred = []
         for estimator, feature_idx, _ in self.estimators:
             y_pred.append(estimator.predict(X[:, feature_idx]))
