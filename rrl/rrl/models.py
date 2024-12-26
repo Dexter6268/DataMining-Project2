@@ -254,6 +254,7 @@ class RRL:
         for _, y in test_loader:
             y_list.append(y)
         y_true = torch.cat(y_list, dim=0).cpu().numpy()
+        print(y_true)
 
         if self.type == 'discrete':
             y_true = np.argmax(y_true, axis=1)

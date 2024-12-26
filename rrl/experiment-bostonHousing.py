@@ -52,9 +52,9 @@ def get_data_loader(dataset, world_size, rank, batch_size, k=0, pin_memory=False
     kf = KFold(n_splits=5, shuffle=True, random_state=0)
     train_index, test_index = list(kf.split(X_df))[k]
     X_train = X[train_index]
-    y_train = y[train_index].reshape(-1, 1)  # Ensure y_train is 2D for regression
+    y_train = y[train_index]
     X_test = X[test_index]
-    y_test = y[test_index].reshape(-1, 1)  # Ensure y_test is 2D for regression
+    y_test = y[test_index]
 
     train_set = TensorDataset(torch.tensor(X_train.astype(np.float32)), torch.tensor(y_train.astype(np.float32)))
     test_set = TensorDataset(torch.tensor(X_test.astype(np.float32)), torch.tensor(y_test.astype(np.float32)))
