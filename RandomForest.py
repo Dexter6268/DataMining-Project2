@@ -24,6 +24,7 @@ class CART:
     def _build_tree(self, X, y, depth=0):
         num_samples, num_features = X.shape
         unique_values = np.unique(y)
+        # stop conditions
         if len(unique_values) == 1 or (self.max_depth and depth == self.max_depth) or num_samples < self.min_samples_split:
             if self.mode == 'regression':
                 return np.mean(y)
@@ -34,28 +35,59 @@ class CART:
         best_score = float('inf')
 
         for feature_idx in range(num_features):
-            thresholds = np.unique(X[:, feature_idx])
-            for threshold in thresholds:
-                left_mask = X[:, feature_idx] <= threshold
-                left_y = y[left_mask]
-                right_y = y[~left_mask]
+            # Sort the feature and corresponding labels
+            sorted_indices = np.argsort(X[:, feature_idx])
+            sorted_X = X[sorted_indices, feature_idx]
+            sorted_y = y[sorted_indices]
+            if self.mode == 'regression':
+                left_sum = 0
+                right_sum = sorted_y.sum()
+                left_count = 0
+                right_count = num_samples
+                
+                for i in range(1, num_samples):  # Traverse sorted feature values
+                    left_sum += sorted_y[i - 1]
+                    right_sum -= sorted_y[i - 1]
+                    left_count += 1
+                    right_count -= 1
 
-                if len(left_y) == 0 or len(right_y) == 0:
-                    continue
+                    if sorted_X[i] == sorted_X[i - 1]:  # Skip duplicate thresholds
+                        continue
 
-                if self.mode == 'regression':
-                    left_rss = np.sum((left_y - left_y.mean()) ** 2)
-                    right_rss = np.sum((right_y - right_y.mean()) ** 2)
+                    left_mean = left_sum / left_count
+                    right_mean = right_sum / right_count
+
+                    # Compute RSS
+                    left_rss = np.sum((sorted_y[:i] - left_mean) ** 2)
+                    right_rss = np.sum((sorted_y[i:] - right_mean) ** 2)
                     score = (left_rss + right_rss) / num_samples
-                else:
-                    left_gini = self._gini(left_y)
-                    right_gini = self._gini(right_y)
-                    score = (len(left_y) * left_gini + len(right_y) * right_gini) / num_samples
 
-                if score < best_score:
-                    best_score = score
-                    best_left_mask = left_mask
-                    best_split = (feature_idx, threshold)
+                    # Update best split
+                    if score < best_score:
+                        best_score = score
+                        best_split = (feature_idx, (sorted_X[i] + sorted_X[i - 1]) / 2)
+            else:
+                left_counts = np.zeros(max(sorted_y) + 1)
+                right_counts = np.bincount(sorted_y, minlength=max(sorted_y) + 1)
+
+                for i in range(1, num_samples):
+                    left_counts[sorted_y[i - 1]] += 1
+                    right_counts[sorted_y[i - 1]] -= 1
+
+                    if sorted_X[i] == sorted_X[i - 1]:  # Skip duplicate thresholds
+                        continue
+
+                    left_prob = left_counts / left_counts.sum()
+                    right_prob = right_counts / right_counts.sum()
+
+                    left_gini = 1 - np.sum(left_prob ** 2)
+                    right_gini = 1 - np.sum(right_prob ** 2)
+                    score = (left_gini * left_counts.sum() + right_gini * right_counts.sum()) / num_samples
+
+                    # Update best split
+                    if score < best_score:
+                        best_score = score
+                        best_split = (feature_idx, (sorted_X[i] + sorted_X[i - 1]) / 2)
 
         if best_split is None:
             if self.mode == 'regression':
@@ -63,8 +95,12 @@ class CART:
             else:
                 return stats.mode(y, keepdims=False).mode
 
-        left_tree = self._build_tree(X[best_left_mask], y[best_left_mask], depth + 1)
-        right_tree = self._build_tree(X[~best_left_mask], y[~best_left_mask], depth + 1)
+        # Recursively build left and right subtrees
+        feature_idx, threshold = best_split
+        left_mask = X[:, feature_idx] <= threshold
+        right_mask = ~left_mask
+        left_tree = self._build_tree(X[left_mask], y[left_mask], depth + 1)
+        right_tree = self._build_tree(X[right_mask], y[right_mask], depth + 1)
         
         return {
             'best_split': best_split,
@@ -81,11 +117,6 @@ class CART:
                 return self._predict_row(row, tree['right'])
         else:
             return tree
-    
-    def _gini(self, y):
-        _, counts = np.unique(y, return_counts=True)
-        p = counts / len(y)
-        return 1 - np.sum(p ** 2)
 
 class RandomForest:
     def __init__(self, n_estimators=10, max_depth=None, min_samples_split=2, max_features='sqrt', oob_score=False, mode="regression", random_state=0, n_jobs=-1):

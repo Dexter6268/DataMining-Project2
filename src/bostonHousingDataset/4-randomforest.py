@@ -102,7 +102,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Boston Housing Regression with RandomForest.")
     parser.add_argument("--data_path", type=str, default="data/HousingData.csv", help="Path to the Boston Housing dataset.")
-    parser.add_argument("--log_dir", type=str, default="results/BostonHousingDataset", help="Directory to save the log files.")
+    parser.add_argument("--log_dir", type=str, default="results/BostonHousingDataset/randomforest", help="Directory to save the log files.")
     parser.add_argument("--n_splits", type=int, default=5, help="Number of splits for K-Fold cross-validation.")
     parser.add_argument("--random_state", type=int, default=42, help="Random state for reproducibility.")
     parser.add_argument("--n_estimators", type=int, default=200, help="Number of trees in RandomForest.")

@@ -152,7 +152,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train XGBoost on Breast Cancer Dataset.")
     parser.add_argument("--train_path", type=str, default="data/breastCancer/breastCancer_Train.dbc", help="Path to the training dataset.")
     parser.add_argument("--test_path", type=str, default="data/breastCancer/breastCancer_Test.dbc", help="Path to the test dataset.")
-    parser.add_argument("--log_dir", type=str, default="results/breastCancer", help="Directory to save the log files.")
+    parser.add_argument("--log_dir", type=str, default="results/breastCancer/xgboost", help="Directory to save the log files.")
     parser.add_argument("--pca_components", type=int, default=0.99, help="Number of PCA components.")
     parser.add_argument("--random_state", type=int, default=42, help="Random state for reproducibility.")
     parser.add_argument("--max_depth", type=int, default=6, help="Maximum tree depth in XGBoost.")

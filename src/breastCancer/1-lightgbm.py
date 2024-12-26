@@ -153,7 +153,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train LightGBM on Breast Cancer Dataset.")
     parser.add_argument("--train_path", type=str, default="data/breastCancer/breastCancer_Train.dbc", help="Path to the training dataset.")
     parser.add_argument("--test_path", type=str, default="data/breastCancer/breastCancer_Test.dbc", help="Path to the test dataset.")
-    parser.add_argument("--log_dir", type=str, default="results/breastCancer", help="Directory to save the log files.")
+    parser.add_argument("--log_dir", type=str, default="results/breastCancer/lightgbm", help="Directory to save the log files.")
     parser.add_argument("--pca_components", type=int, default=50, help="Number of PCA components.")
     parser.add_argument("--n_estimators", type=int, default=500, help="Number of trees in LightGBM.")
     parser.add_argument("--learning_rate", type=float, default=0.2, help="Learning rate for LightGBM.")
